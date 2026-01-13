@@ -1,10 +1,10 @@
-# CoreFlow — Product Spec (v1)
+# CoreVision — Product Spec (v1)
 
 ## 1. Overview
 
-CoreFlow is an open-source platform built by **Apollume Labs** that runs real-time computer vision on multiple camera streams. Users register cameras and “drop in” models (served by Triton), then CoreFlow launches DeepStream pipelines that decode, batch, infer, track, and output both annotated streams and detection events.
+CoreVision is an open-source platform built by **Apollume Labs** that runs real-time computer vision on multiple camera streams. Users register cameras and “drop in” models (served by Triton), then CoreVision launches DeepStream pipelines that decode, batch, infer, track, and output both annotated streams and detection events.
 
-CoreFlow uses:
+CoreVision uses:
 
 * **NVIDIA DeepStream** for video ingest + GPU decode + batching + tracking + OSD
 * **NVIDIA Triton Inference Server** for model serving
@@ -50,7 +50,7 @@ A video source (RTSP in v1). Stored as a resource and can be assigned to pipelin
 
 ### Model
 
-A Triton-served detector model. CoreFlow supports detectors that output bounding boxes (v1).
+A Triton-served detector model. CoreVision supports detectors that output bounding boxes (v1).
 
 ### Pipeline
 
@@ -173,7 +173,7 @@ v1 requirement:
 
 ### 6.2 Detection Events (JSON)
 
-CoreFlow produces normalized detection events.
+CoreVision produces normalized detection events.
 
 **Event schema**
 
