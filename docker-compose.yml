@@ -1,0 +1,16 @@
+services:
+  backend:
+    container_name: corevision-backend
+    build:
+      context: ./backend
+      dockerfile: dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend/app:/app/app
+    networks:
+      - corevision-network
+  
+networks:
+  corevision-network:
+    driver: bridge
