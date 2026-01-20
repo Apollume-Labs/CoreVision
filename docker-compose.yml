@@ -8,8 +8,24 @@ services:
       - "8000:8000"
     volumes:
       - ./backend/app:/app/app
+    environment:
+      - TRITON_HOST=triton
+      - TRITON_GRPC_PORT=8001
     networks:
       - corevision-network
+  
+  triton:
+    container_name: corevision-triton
+    image: nvcr.io/nvidia/tritonserver:25.12-py3
+    command: tritonserver --model-repository=/models --log-verbose=1
+    ports:
+      - "8001:8001"  # gRPC
+      - "8002:8000"  # HTTP (avoiding conflict with backend:8000)
+    volumes:
+      - ./infra/triton/model_repo:/models
+    networks:
+      - corevision-network
+    restart: unless-stopped
   
 networks:
   corevision-network:
