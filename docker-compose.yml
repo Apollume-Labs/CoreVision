@@ -27,6 +27,30 @@ services:
       - corevision-network
     restart: unless-stopped
   
+  postgres:
+    container_name: corevision-postgres
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_USER=corevision
+      - POSTGRES_PASSWORD=corevision123
+      - POSTGRES_DB=corevision
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - corevision-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U corevision"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+  
 networks:
   corevision-network:
     driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local

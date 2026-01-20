@@ -1,6 +1,7 @@
 from tritonclient.utils import InferenceServerException
 import tritonclient.grpc as grpcclient
 from fastapi import FastAPI, HTTPException
+from app.api.v1 import cameras
 import os
 
 TRITON_HOST = os.getenv("TRITON_HOST", "triton")
@@ -11,6 +12,8 @@ app = FastAPI(
     description="API for CoreVision application backend services.",
     version="1.0.0",
 )
+
+app.include_router(cameras.router, prefix="/api/v1")
 
 @app.get("/health")
 async def health():
