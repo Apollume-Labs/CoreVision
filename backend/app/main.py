@@ -1,7 +1,7 @@
 from tritonclient.utils import InferenceServerException
-import tritonclient.grpc as grpcclient
+from tritonclient.grpc import InferenceServerClient
 from fastapi import FastAPI, HTTPException
-from app.api.v1 import cameras
+from app.api.v1 import cameras, models
 import os
 
 TRITON_HOST = os.getenv("TRITON_HOST", "triton")
@@ -14,6 +14,7 @@ app = FastAPI(
 )
 
 app.include_router(cameras.router, prefix="/api/v1")
+app.include_router(models.router, prefix="/api/v1")
 
 @app.get("/health")
 async def health():
@@ -28,7 +29,7 @@ async def health():
 async def triton_health():
     """Check Triton inference server connectivity"""
     try:
-        triton_client = grpcclient.InferenceServerClient(
+        triton_client = InferenceServerClient(
             url=f"{TRITON_HOST}:{TRITON_GRPC_PORT}"
         )
         
