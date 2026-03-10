@@ -9,43 +9,26 @@ from app.infrastructure.triton_client import TritonClient
 
 
 class ModelService:
-    """Service for model registry operations"""
-    
     def __init__(self, db: Session):
         self.db = db
         self.triton_client = TritonClient()
-    
+
     def create_model(self, model_data: ModelCreate) -> Model:
-        """
-        Register a new model.
-        
-        Args:
-            model_data: Model registration data
-            
-        Returns:
-            Created model
-            
-        Raises:
-            HTTPException: If model name exists or Triton validation fails
-        """
-        # Validate Triton is reachable
         if not self.triton_client.is_server_ready():
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
                 detail="Triton server is not ready"
             )
-        
-        # Validate model exists in Triton
+
         if not self.triton_client.model_exists(
-            model_data.triton_model_name, 
+            model_data.triton_model_name,
             model_data.triton_model_version
         ):
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Model '{model_data.triton_model_name}' version '{model_data.triton_model_version}' not found in Triton"
             )
-        
-        # Create model record
+
         model = Model(
             name=model_data.name,
             triton_model_name=model_data.triton_model_name,
@@ -55,7 +38,7 @@ class ModelService:
             input_shape=model_data.input_shape,
             parser_type=model_data.parser_type
         )
-        
+
         try:
             self.db.add(model)
             self.db.commit()
@@ -67,20 +50,8 @@ class ModelService:
                 status_code=status.HTTP_409_CONFLICT,
                 detail=f"Model with name '{model_data.name}' already exists"
             )
-    
+
     def get_model(self, model_id: int) -> Model:
-        """
-        Get model by ID.
-        
-        Args:
-            model_id: Model ID
-            
-        Returns:
-            Model object
-            
-        Raises:
-            HTTPException: If model not found
-        """
         model = self.db.query(Model).filter(Model.id == model_id).first()
         if not model:
             raise HTTPException(
@@ -88,40 +59,16 @@ class ModelService:
                 detail=f"Model with id {model_id} not found"
             )
         return model
-    
+
     def list_models(self) -> List[Model]:
-        """
-        List all registered models.
-        
-        Returns:
-            List of models
-        """
         return self.db.query(Model).all()
-    
+
     def delete_model(self, model_id: int) -> None:
-        """
-        Delete model.
-        
-        Args:
-            model_id: Model ID
-            
-        Raises:
-            HTTPException: If model not found or in use by pipeline
-        """
         model = self.get_model(model_id)
-        
-        # TODO: Check if model is used by any pipeline
-        
         self.db.delete(model)
         self.db.commit()
-    
+
     def list_triton_models(self) -> List[str]:
-        """
-        List all available models in Triton (for discovery).
-        
-        Returns:
-            List of model names from Triton
-        """
         try:
             return self.triton_client.list_models()
         except Exception as e:

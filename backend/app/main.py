@@ -1,7 +1,7 @@
 from tritonclient.utils import InferenceServerException
 from tritonclient.grpc import InferenceServerClient
 from fastapi import FastAPI, HTTPException
-from app.api.v1 import cameras, models
+from app.api.v1 import cameras, models, pipelines
 import os
 
 TRITON_HOST = os.getenv("TRITON_HOST", "triton")
@@ -15,29 +15,25 @@ app = FastAPI(
 
 app.include_router(cameras.router, prefix="/api/v1")
 app.include_router(models.router, prefix="/api/v1")
+app.include_router(pipelines.router, prefix="/api/v1")
+
 
 @app.get("/health")
 async def health():
-    """Backend health check"""
     return {
         "status": "healthy",
         "service": "corevision-backend",
         "version": "0.1.0"
     }
 
+
 @app.get("/health/triton")
 async def triton_health():
-    """Check Triton inference server connectivity"""
     try:
-        triton_client = InferenceServerClient(
-            url=f"{TRITON_HOST}:{TRITON_GRPC_PORT}"
-        )
-        
-        # Check if server is live
+        triton_client = InferenceServerClient(url=f"{TRITON_HOST}:{TRITON_GRPC_PORT}")
+
         if triton_client.is_server_live():
-            # Get server metadata
             metadata = triton_client.get_server_metadata()
-            
             return {
                 "status": "healthy",
                 "triton_host": TRITON_HOST,
@@ -47,18 +43,9 @@ async def triton_health():
                 "connected": True
             }
         else:
-            raise HTTPException(
-                status_code=503,
-                detail="Triton server is not live"
-            )
-            
+            raise HTTPException(status_code=503, detail="Triton server is not live")
+
     except InferenceServerException as e:
-        raise HTTPException(
-            status_code=503,
-            detail=f"Triton connection failed: {str(e)}"
-        )
+        raise HTTPException(status_code=503, detail=f"Triton connection failed: {str(e)}")
     except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Unexpected error: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Unexpected error: {str(e)}")
