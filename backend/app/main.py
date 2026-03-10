@@ -1,0 +1,51 @@
+from tritonclient.utils import InferenceServerException
+from tritonclient.grpc import InferenceServerClient
+from fastapi import FastAPI, HTTPException
+from app.api.v1 import cameras, models, pipelines
+import os
+
+TRITON_HOST = os.getenv("TRITON_HOST", "triton")
+TRITON_GRPC_PORT = os.getenv("TRITON_GRPC_PORT", "8001")
+
+app = FastAPI(
+    title="CoreVision Backend API",
+    description="API for CoreVision application backend services.",
+    version="1.0.0",
+)
+
+app.include_router(cameras.router, prefix="/api/v1")
+app.include_router(models.router, prefix="/api/v1")
+app.include_router(pipelines.router, prefix="/api/v1")
+
+
+@app.get("/health")
+async def health():
+    return {
+        "status": "healthy",
+        "service": "corevision-backend",
+        "version": "0.1.0"
+    }
+
+
+@app.get("/health/triton")
+async def triton_health():
+    try:
+        triton_client = InferenceServerClient(url=f"{TRITON_HOST}:{TRITON_GRPC_PORT}")
+
+        if triton_client.is_server_live():
+            metadata = triton_client.get_server_metadata()
+            return {
+                "status": "healthy",
+                "triton_host": TRITON_HOST,
+                "triton_port": TRITON_GRPC_PORT,
+                "server_name": metadata.name,
+                "server_version": metadata.version,
+                "connected": True
+            }
+        else:
+            raise HTTPException(status_code=503, detail="Triton server is not live")
+
+    except InferenceServerException as e:
+        raise HTTPException(status_code=503, detail=f"Triton connection failed: {str(e)}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Unexpected error: {str(e)}")
